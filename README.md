@@ -1,5 +1,4 @@
 # Immich Album Sync
-Vibe Coding using TRAE.
 
 An Electron desktop app that syncs a selected Immich album to a local folder. Built with React, TypeScript, Vite, and vite-plugin-electron. It periodically downloads new assets from your chosen album to the path you select.
 

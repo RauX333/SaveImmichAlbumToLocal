@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
 import tsconfigPaths from "vite-tsconfig-paths"
-import { traeBadgePlugin } from 'vite-plugin-trae-solo-badge'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -40,14 +39,6 @@ export default defineConfig({
       },
     ]),
     renderer(),
-    traeBadgePlugin({
-      variant: 'dark',
-      position: 'bottom-right',
-      prodOnly: true,
-      clickable: false,
-      autoTheme: true,
-      autoThemeTarget: '#root'
-    }), 
     tsconfigPaths()
   ],
 })
