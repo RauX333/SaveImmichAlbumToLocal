@@ -40,7 +40,29 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   loadConfig: async () => {
     try {
       console.log('useConfigStore: fetching config...')
-      const config = await window.ipcRenderer.invoke('get-config')
+      // Add timeout to prevent hanging indefinitely
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout fetching config')), 5000)
+      )
+      
+      let config = await Promise.race([
+        window.ipcRenderer.invoke('get-config'),
+        timeoutPromise
+      ]) as Config
+      
+      // Ensure config is a valid object
+      if (!config || typeof config !== 'object') {
+        console.warn('useConfigStore: received invalid config, using defaults')
+        config = {
+          immichUrl: '',
+          apiKey: '',
+          targetAlbumId: '',
+          targetAlbumName: '',
+          localPath: '',
+          lastSyncTime: ''
+        }
+      }
+
       console.log('useConfigStore: config received', config)
       set({ config, persistedConfig: config, isLoading: false })
     } catch (e) {

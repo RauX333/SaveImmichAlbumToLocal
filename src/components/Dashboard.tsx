@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useConfigStore } from '@/store/useConfigStore'
-import { RefreshCw, Settings, Folder, Image } from 'lucide-react'
+import { RefreshCw, Settings, Folder, Image, XCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export function Dashboard() {
@@ -15,25 +15,25 @@ export function Dashboard() {
     }
   }, [])
 
-  const handleSync = async () => {
-    console.log('Dashboard: handleSync started')
-    setSyncing(true)
-    
-    // Setup listener for completion
-    const cleanup = () => {
-      window.ipcRenderer.off('sync-complete', onSyncComplete)
-    }
-
+  useEffect(() => {
     const onSyncComplete = async (_event: unknown, result: unknown) => {
       console.log('Dashboard: sync-complete received', result)
       if (isMounted.current) {
-        await loadConfig()
         setSyncing(false)
+        await loadConfig()
       }
-      cleanup()
     }
 
     window.ipcRenderer.on('sync-complete', onSyncComplete)
+
+    return () => {
+      window.ipcRenderer.off('sync-complete', onSyncComplete)
+    }
+  }, [loadConfig])
+
+  const handleSync = async () => {
+    console.log('Dashboard: handleSync started')
+    setSyncing(true)
 
     try {
       console.log('Dashboard: invoking start-sync')
@@ -42,7 +42,16 @@ export function Dashboard() {
     } catch (error) {
       console.error('Dashboard: start-sync failed', error)
       setSyncing(false)
-      cleanup()
+    }
+  }
+
+  const handleStopSync = async () => {
+    console.log('Dashboard: handleStopSync started')
+    try {
+      await window.ipcRenderer.invoke('stop-sync')
+      console.log('Dashboard: stop-sync invoked successfully')
+    } catch (error) {
+      console.error('Dashboard: stop-sync failed', error)
     }
   }
 
@@ -91,16 +100,27 @@ export function Dashboard() {
             </p>
           </div>
           
-          <button 
-            onClick={handleSync}
-            disabled={syncing}
-            className={`flex items-center gap-2 px-6 py-3 rounded-md text-white font-medium transition-colors
-              ${syncing ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}
-            `}
-          >
-            <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
-            {syncing ? 'Syncing...' : 'Sync Now'}
-          </button>
+          <div className="flex gap-2">
+            {syncing && (
+              <button 
+                onClick={handleStopSync}
+                className="flex items-center gap-2 px-6 py-3 rounded-md text-white font-medium transition-colors bg-red-600 hover:bg-red-700"
+              >
+                <XCircle size={20} />
+                Stop
+              </button>
+            )}
+            <button 
+              onClick={handleSync}
+              disabled={syncing}
+              className={`flex items-center gap-2 px-6 py-3 rounded-md text-white font-medium transition-colors
+                ${syncing ? 'bg-gray-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}
+              `}
+            >
+              <RefreshCw size={20} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? 'Syncing...' : 'Sync Now'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

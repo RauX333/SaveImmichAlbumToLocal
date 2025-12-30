@@ -5,6 +5,14 @@ import { ImmichClient } from './immich'
 import { addSyncedAsset, isAssetSynced, setConfigValue } from './db'
 
 let isSyncing = false
+let shouldCancel = false
+
+export function cancelSync() {
+  if (isSyncing) {
+    shouldCancel = true
+    console.log('Cancellation requested')
+  }
+}
 
 export async function syncAssets(config: { immichUrl: string, apiKey: string, targetAlbumId: string, localPath: string }) {
   if (isSyncing) {
@@ -12,6 +20,7 @@ export async function syncAssets(config: { immichUrl: string, apiKey: string, ta
     return { success: false, alreadyRunning: true }
   }
   isSyncing = true
+  shouldCancel = false
   console.log('Starting sync...')
 
   try {
@@ -40,6 +49,11 @@ export async function syncAssets(config: { immichUrl: string, apiKey: string, ta
     let downloadedCount = 0
 
     for (const asset of assets) {
+      if (shouldCancel) {
+        console.log('Sync cancelled by user')
+        return { success: false, cancelled: true, downloaded: downloadedCount }
+      }
+
       if (isAssetSynced(asset.id)) {
         console.log(`Skipping already-synced asset ${asset.originalFileName} (${asset.id})`)
         continue
@@ -74,14 +88,7 @@ export async function syncAssets(config: { immichUrl: string, apiKey: string, ta
     }
     
     // Always update lastSyncTime to show it ran
-    console.log('Updating lastSyncTime...')
-    // Verify config integrity before writing
-    if (config.immichUrl) {
-      setConfigValue('lastSyncTime', new Date().toISOString())
-      console.log('lastSyncTime updated')
-    } else {
-      console.error('Config appears corrupted or empty, skipping lastSyncTime update')
-    }
+    // (Moved to main.ts to avoid redundant DB writes)
     
     const result = {
       success: true,

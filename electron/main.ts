@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { initDB, getConfig, saveConfig, setConfigValue, getConnections, saveConnections, updateActiveConnection } from './db'
-import { syncAssets } from './sync'
+import { syncAssets, cancelSync } from './sync'
 import { ImmichClient } from './immich'
 import { initLogger, writeLog, readLogs } from './logger'
 
@@ -33,8 +33,8 @@ function createWindow() {
     height: 800,
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
-      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: true,
       contextIsolation: true,
     },
   })
@@ -72,7 +72,6 @@ app.on('activate', () => {
 app.whenReady().then(() => {
   initDB()
   initLogger()
-  createWindow()
   
   // Register IPC handlers
   ipcMain.handle('get-config', () => {
@@ -139,11 +138,21 @@ app.whenReady().then(() => {
         setConfigValue('lastSyncTime', ts)
         updateActiveConnection({ lastSyncTime: ts })
       }
-      event.sender.send('sync-complete', result)
+      if (!event.sender.isDestroyed()) {
+        event.sender.send('sync-complete', result)
+      }
     }).catch(err => {
       writeLog('ERROR', `syncAssets error ${String(err)}`)
-      event.sender.send('sync-complete', { error: err.message })
+      if (!event.sender.isDestroyed()) {
+        event.sender.send('sync-complete', { error: err.message })
+      }
     })
+    return true
+  })
+
+  ipcMain.handle('stop-sync', async () => {
+    writeLog('INFO', 'IPC stop-sync received')
+    cancelSync()
     return true
   })
 
@@ -161,6 +170,8 @@ app.whenReady().then(() => {
       return false
     }
   })
+
+  createWindow()
 
   // Initial sync attempt (after short delay)
   setTimeout(() => {

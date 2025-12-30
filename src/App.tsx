@@ -14,7 +14,13 @@ function App() {
     return <div className="flex h-screen items-center justify-center text-gray-500">Loading configuration...</div>
   }
 
-  const isConfigured = persistedConfig.immichUrl && persistedConfig.apiKey && persistedConfig.targetAlbumId && persistedConfig.localPath
+  // Ensure all required fields are present and not empty
+  const isConfigured = Boolean(
+    persistedConfig?.immichUrl && 
+    persistedConfig?.apiKey && 
+    persistedConfig?.targetAlbumId && 
+    persistedConfig?.localPath
+  )
 
   console.log('App: rendering, isConfigured:', isConfigured, 'persistedConfig:', persistedConfig)
 

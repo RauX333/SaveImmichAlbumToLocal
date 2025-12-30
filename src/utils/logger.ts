@@ -15,17 +15,35 @@ export function installConsoleBridge() {
   const origError = console.error
   console.log = (...args: unknown[]) => {
     origLog(...args)
-    const msg = serialize(args)
-    window.ipcRenderer.invoke('write-log', { level: 'INFO', message: msg })
+    try {
+      const msg = serialize(args)
+      if (window.ipcRenderer) {
+        window.ipcRenderer.invoke('write-log', { level: 'INFO', message: msg }).catch(() => {})
+      }
+    } catch {
+      // ignore
+    }
   }
   console.warn = (...args: unknown[]) => {
     origWarn(...args)
-    const msg = serialize(args)
-    window.ipcRenderer.invoke('write-log', { level: 'WARN', message: msg })
+    try {
+      const msg = serialize(args)
+      if (window.ipcRenderer) {
+        window.ipcRenderer.invoke('write-log', { level: 'WARN', message: msg }).catch(() => {})
+      }
+    } catch {
+      // ignore
+    }
   }
   console.error = (...args: unknown[]) => {
     origError(...args)
-    const msg = serialize(args)
-    window.ipcRenderer.invoke('write-log', { level: 'ERROR', message: msg })
+    try {
+      const msg = serialize(args)
+      if (window.ipcRenderer) {
+        window.ipcRenderer.invoke('write-log', { level: 'ERROR', message: msg }).catch(() => {})
+      }
+    } catch {
+      // ignore
+    }
   }
 }
