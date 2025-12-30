@@ -59,6 +59,23 @@ export default function Settings() {
     }
   }
 
+  const handleReset = async () => {
+    const confirmed = window.confirm('This will reset the local database and delete all settings. Continue?')
+    if (!confirmed) return
+    try {
+      const ok = await window.ipcRenderer.invoke('reset-db')
+      if (ok) {
+        console.log('Settings: reset-db completed, navigating to setup')
+        navigate('/')
+      } else {
+        alert('Reset failed. See logs for details.')
+      }
+    } catch (e) {
+      console.error('Settings: reset-db error', e)
+      alert('Reset failed: ' + String(e))
+    }
+  }
+
   const testAndLoadAlbums = async (c: ConnectionConfig) => {
     setConnLoading((prev) => ({ ...prev, [c.id]: true }))
     setConnError((prev) => ({ ...prev, [c.id]: '' }))
@@ -249,6 +266,19 @@ export default function Settings() {
                 {logsLoading ? <p className="text-gray-500">Loading logs...</p> : logs || <p className="text-gray-500">No logs yet.</p>}
               </div>
             </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Danger Zone</h2>
+            <p className="text-sm text-gray-600 mb-3">
+              Reset the local database and delete all saved settings and connections.
+            </p>
+            <button
+              onClick={handleReset}
+              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              <Trash2 size={16} />
+              Reset Database & Delete All Settings
+            </button>
           </div>
         </div>
       </div>

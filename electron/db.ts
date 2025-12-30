@@ -190,3 +190,14 @@ export function getSyncedAsset(id: string) {
   const stmt = getDB().prepare('SELECT * FROM synced_assets WHERE id = ?')
   return stmt.get(id)
 }
+
+export function resetDatabase() {
+  writeLog('WARN', 'DB: Resetting database - clearing config and synced_assets')
+  const db = getDB()
+  const tx = db.transaction(() => {
+    db.exec('DELETE FROM config')
+    db.exec('DELETE FROM synced_assets')
+  })
+  tx()
+  writeLog('WARN', 'DB: Reset complete')
+}

@@ -2,7 +2,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import { pipeline } from 'stream/promises'
 import { ImmichClient } from './immich'
-import { addSyncedAsset, isAssetSynced, setConfigValue } from './db'
+import { addSyncedAsset, isAssetSynced } from './db'
 
 let isSyncing = false
 let shouldCancel = false

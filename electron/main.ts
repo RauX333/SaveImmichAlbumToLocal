@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { initDB, getConfig, saveConfig, setConfigValue, getConnections, saveConnections, updateActiveConnection } from './db'
+import { initDB, getConfig, saveConfig, setConfigValue, getConnections, saveConnections, updateActiveConnection, resetDatabase } from './db'
 import { syncAssets, cancelSync } from './sync'
 import { ImmichClient } from './immich'
 import { initLogger, writeLog, readLogs } from './logger'
@@ -167,6 +167,17 @@ app.whenReady().then(() => {
       writeLog(level, message)
       return true
     } catch {
+      return false
+    }
+  })
+
+  ipcMain.handle('reset-db', () => {
+    writeLog('WARN', 'IPC reset-db received, resetting local database')
+    try {
+      resetDatabase()
+      return true
+    } catch (e) {
+      writeLog('ERROR', 'IPC reset-db failed: ' + String(e))
       return false
     }
   })
